@@ -4,7 +4,7 @@ DEV_TAG = local-dev
 NAMESPACE = gruen
 IMAGE = sass
 
-DEV_IMAGE = $(NAMESPACE)/$(IMAGE):$(DEV_TAG)
+DEV_IMAGE = $(NAMESPACE)/$(IMAGE):$(DEV_TAG)_$$(git rev-parse --abbrev-ref HEAD)
 
 
 build: ## Create a build based on current git branch
