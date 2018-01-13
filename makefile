@@ -11,7 +11,7 @@ build: ## Create a build based on current git branch
 	docker build \
 		--build-args GIT_SHA=$$(git rev-parse --short HEAD) \
 		--build-args BUILD_DATE=$$(date +%Y-%m-%d_%H:%M.%s) \
-		-t $(NAMESPACE)/$(IMAGE):$$(git rev-parse --abbrev-ref HEAD) \
+		-t $(DEV_IMAGE) \
 		.
 
 buildlocal: ## Build a local test version tagged "local-dev"
