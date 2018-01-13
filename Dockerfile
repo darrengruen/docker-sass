@@ -2,6 +2,8 @@ ARG IMG_VERSION=2.5.0-alpine3.7
 FROM ruby:${IMG_VERSION}
 ARG BUILD_DATE
 ARG GIT_SHA
+WORKDIR /sass
+VOLUME ["/sass/src", "/sass/output"]
 CMD ["sass"]
 ENTRYPOINT ["sass"]
 LABEL org.schema-label.build-date=${BUILD_DATE} \
