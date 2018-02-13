@@ -1,47 +1,33 @@
--include make_env
-
-BUILD_DATE = $$(date +%Y-%m-%d_%H:%M.%s)
-DEV_TAG = local-dev
+BUILD_DATE = $$(date -u +%FT%T.%S%Z)
 NAMESPACE = gruen
 IMAGE = sass
 GIT_SHA = $$(git rev-parse --short HEAD)
+FILTER = "label=org.schema-label.name=sass"
+TAG = $$(git rev-parse --abbrev-ref HEAD)
+IMAGE_NAME = $(NAMESPACE)/$(IMAGE):$(TAG)
 
-DEV_IMAGE = $(NAMESPACE)/$(IMAGE):$(DEV_TAG)_$(GIT_SHA)
+build: .build ## Build the image
 
+clean: .clean ## Clear all image/containers related to this image
 
-build: ## Create a build based on current git branch
-	docker build \
-		--build-args GIT_SHA=$(GIT_SHA) \
-		--build-args BUILD_DATE=$(BUILD_DATE) \
-		-t $(DEV_IMAGE) \
+help: .help ## Output this help file
+
+.build: 
+	@docker build \
+		--build-arg GIT_SHA=$(GIT_SHA) \
+		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		-t $(IMAGE_NAME) \
 		.
 
-buildlocal: ## Build a local test version tagged "local-dev"
-	# Use static build args so we can take advantage of the cache
-	# in dev builds
-	docker build \
-		--build-arg BUILD_DATE=local_dev_no_date \
-		--build-arg GIT_SHA=local_dev_no_sha \
-		-t $(DEV_IMAGE) \
-		.
+.clean:
+    ifneq ($(shell docker ps -a -f $(FILTER) --format "{{.Names}}"),)
+	@docker rm -f $(shell docker ps  -a -f $(FILTER) --format "{{.Names}}")
+    endif
 
-cleandev: ## Cleans up the local dev images. This forcefully stops containers
-	docker rm -f $(DEV_IMAGE)
-
-default: help
+    ifneq ($(shell docker images -f $(FILTER) --format "{{.ID}}"),)
+	@docker rmi -f $(shell docker images -f $(FILTER) --format "{{.ID}}")
+    endif
 
 help: ## Show help file
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "- \033[36m%-20s\033[0m %s\n", $$1, $$2}' ${MAKEFILE_LIST}
 
-pull: ## Pull the latest version of this image
-	docker pull $(NAMESPACE)/$(IMAGE)
-
-test: ## Run a quick test on locally built image
-	docker run -it --rm \
-		--name test_run_$(NAMESPACE)_$(IMAGE)_$(date +%s) \
-		$(DEV_IMAGE) -v
-
-
-testbuild: buildlocal test ## Builds dev image and runs test
-
-update: pull
